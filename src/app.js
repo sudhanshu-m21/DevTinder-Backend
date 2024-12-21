@@ -7,6 +7,8 @@ const { validateSignUp } = require("./utils/validate");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middleware/auth");
+// const { validatePassword } = require("./models/user");
 app.use(express.json());
 app.use(cookieParser());
 app.post("/signup", async (req, res) => {
@@ -34,10 +36,12 @@ app.post("/login", async (req, res) => {
     const { emailId, password } = req.body;
     const user = await User.findOne({ emailId: emailId });
     if (!user) throw new Error("Invalid Credential");
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await user.validatePassword(password);
     if (isPasswordValid) {
-      const token = await jwt.sign({ _id: user._id }, "Dev@hello123");
-      res.cookie("token", token);
+      const token = await user.getJWT();
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+      });
       res.send("logged in");
     } else throw new Error("Invalid Credential");
   } catch (error) {
@@ -45,82 +49,76 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-
-    const { token } = cookies;
-    if (!token) throw new Error("Invalid Token");
-    const decodedMsg = await jwt.verify(token, "Dev@hello123");
-
-    const { _id } = decodedMsg;
-    const user = await User.findById(_id);
-    // console.log(cookies);
-    if (!user) throw new Error("user Not found");
+    const user = req.user;
     res.send(user);
   } catch (error) {
     res.status(400).send("Error:" + error.message);
   }
 });
-
-app.get("/user", async (req, res) => {
-  const userEmail = req.body.emailId;
-  try {
-    const users = await User.find({ emailId: userEmail });
-    if (users.length === 0) res.status(404).send("User not found");
-    res.send(users);
-  } catch (error) {
-    res.status(400).send("something went wrong");
-  }
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  res.send(user.firstName + " sent connection req.");
 });
+// app.get("/user", async (req, res) => {
+//   const userEmail = req.body.emailId;
+//   try {
+//     const users = await User.find({ emailId: userEmail });
+//     if (users.length === 0) res.status(404).send("User not found");
+//     res.send(users);
+//   } catch (error) {
+//     res.status(400).send("something went wrong");
+//   }
+// });
 
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (error) {
-    res.status(400).send("something went wrong");
-  }
-});
+// app.get("/feed", async (req, res) => {
+//   try {
+//     const users = await User.find({});
+//     res.send(users);
+//   } catch (error) {
+//     res.status(400).send("something went wrong");
+//   }
+// });
 
-app.delete("/user", async (req, res) => {
-  const userId = req.body.userId;
-  try {
-    const user = await User.findByIdAndDelete({ _id: userId });
-    res.send("deleted successfully");
-  } catch (error) {
-    res.status(400).send("something went wrong");
-  }
-});
+// app.delete("/user", async (req, res) => {
+//   const userId = req.body.userId;
+//   try {
+//     const user = await User.findByIdAndDelete({ _id: userId });
+//     res.send("deleted successfully");
+//   } catch (error) {
+//     res.status(400).send("something went wrong");
+//   }
+// });
 
-app.patch("/user/:userId", async (req, res) => {
-  const userId = req.params?.userId;
-  const data = req.body;
+// app.patch("/user/:userId", async (req, res) => {
+//   const userId = req.params?.userId;
+//   const data = req.body;
 
-  try {
-    const ALLOWED_UPDATES = [
-      "about",
-      "gender",
-      "age",
-      // "firstName",
-      // "lastName",
-      // "emailId",
-      // "password",
-    ];
-    const isUpdateAllowed = Object.keys(data).every((k) =>
-      ALLOWED_UPDATES.includes(k)
-    );
-    if (!isUpdateAllowed) {
-      throw new Error("update not allowed");
-    }
-    await User.findByIdAndUpdate({ _id: userId }, data, {
-      runValidators: true,
-    });
-    res.send("user data updated");
-  } catch (error) {
-    res.status(400).send("some Error, " + error.message);
-  }
-});
+//   try {
+//     const ALLOWED_UPDATES = [
+//       "about",
+//       "gender",
+//       "age",
+//       // "firstName",
+//       // "lastName",
+//       // "emailId",
+//       // "password",
+//     ];
+//     const isUpdateAllowed = Object.keys(data).every((k) =>
+//       ALLOWED_UPDATES.includes(k)
+//     );
+//     if (!isUpdateAllowed) {
+//       throw new Error("update not allowed");
+//     }
+//     await User.findByIdAndUpdate({ _id: userId }, data, {
+//       runValidators: true,
+//     });
+//     res.send("user data updated");
+//   } catch (error) {
+//     res.status(400).send("some Error, " + error.message);
+//   }
+// });
 
 connectDB
   .then(() => {
