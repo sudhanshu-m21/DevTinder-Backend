@@ -3,6 +3,7 @@ require("dotenv").config();
 const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const app = express();
+// app.use(express.static(path.join(__dirname, "public")));
 const cors = require("cors");
 app.use(express.json());
 app.use(cookieParser());
