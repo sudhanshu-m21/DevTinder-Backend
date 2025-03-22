@@ -1,4 +1,5 @@
 const express = require("express");
+require("dotenv").config();
 const connectDB = require("./config/database");
 const cookieParser = require("cookie-parser");
 const app = express();
@@ -8,7 +9,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials: true,
   })
 );
@@ -26,7 +27,7 @@ app.use("/", userRouter);
 connectDB
   .then(() => {
     console.log("DB connected");
-    app.listen(3000, () => {
+    app.listen(process.env.PORT, () => {
       console.log("server started");
     });
   })

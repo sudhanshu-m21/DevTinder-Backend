@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
     },
     about: {
       type: String,
-      default: "this is default aabout of user",
+      default: "this is default about of user",
     },
   },
   {
