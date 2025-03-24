@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://devtinder-frontend-1syb.onrender.com",
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials: true,
   })
