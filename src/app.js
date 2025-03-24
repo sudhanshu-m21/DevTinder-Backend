@@ -11,6 +11,7 @@ app.use(
   cors({
     origin: "https://devtinder-frontend-1syb.onrender.com",
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
 );
